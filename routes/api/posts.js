@@ -61,4 +61,27 @@ router.get('/', auth, async (req, res) => {
   }
 });
 
+//@route  GET api/posts/:id
+//@desc   GET post by ID
+//@access Private
+
+router.get('/:id', auth, async (req, res) => {
+  try {
+    const post = await Post.findById(req.params.id);
+
+    if (!post) {
+      res.status(400).json({ msg: 'No posts for this user' });
+    }
+
+    res.send(post);
+  } catch (err) {
+    console.error(err.message);
+
+    if (err.kind === 'ObjectId') {
+      res.status(404).json({ msg: 'No posts for this user' });
+    }
+
+    res.status(500).send('Server error');
+  }
+});
 module.exports = router;
