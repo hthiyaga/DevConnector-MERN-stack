@@ -177,7 +177,7 @@ router.put('/unlike/:id', auth, async (req, res) => {
 //@desc   comment to a post
 //@access Public
 router.post(
-  '/comments/:id',
+  '/comment/:id',
   [
     auth,
     [
@@ -214,5 +214,52 @@ router.post(
     }
   }
 );
+
+//@route  DELETE api/posts/comments/:id/:comment_id
+//@desc   Delete a user comment
+//@access private
+
+router.delete('/comment/:id/:comment_id', auth, async (req, res) => {
+  try {
+    const post = await Post.findById(req.params.id);
+
+    //pull out comment
+
+    const comment = post.comments.find(
+      comment => comment.id === req.params.comment_id
+    );
+
+    //make sure comments exists
+
+    if (!comment) {
+      return res.status(400).json({ msg: 'Comment does not exist' });
+    }
+
+    //check user
+
+    if (comment.user.toString() !== req.user.id) {
+      res.status(401).json({ msg: 'User not authorized' });
+    }
+
+    //Get remove index
+
+    const removeIndex = post.comments
+      .map(comment => comment.user.toString())
+      .indexOf(req.user.id);
+
+    post.comments.splice(removeIndex, 1);
+
+    await post.remove();
+
+    res.json(post.comments);
+  } catch (err) {
+    console.error(err.message);
+    // if (err.kind === 'ObjectId') {
+    //   res.status(404).json({ msg: 'No comments for this user' });
+    // }
+
+    res.status(500).send('server error');
+  }
+});
 
 module.exports = router;
